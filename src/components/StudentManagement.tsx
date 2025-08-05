@@ -1,8 +1,30 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Upload, Users, GraduationCap } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Upload } from 'lucide-react';
+
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  section: string;
+  year: string;
+  phone: string;
+  photo: string;
+}
+
+interface NewStudent {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  section: string;
+  year: string;
+  phone: string;
+  photo: string;
+}
 
 const StudentManagement = () => {
-  const [students, setStudents] = useState([
+  const [students, setStudents] = useState<Student[]>([
     {
       id: 'CSE001',
       name: 'Alice Johnson',
@@ -59,7 +81,7 @@ const StudentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
-  const [newStudent, setNewStudent] = useState({
+  const [newStudent, setNewStudent] = useState<NewStudent>({
     id: '',
     name: '',
     email: '',
@@ -76,17 +98,16 @@ const StudentManagement = () => {
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartment === '' || student.department === selectedDepartment;
     const matchesSection = selectedSection === '' || student.section === selectedSection;
-    
     return matchesSearch && matchesDepartment && matchesSection;
   });
 
   const handleAddStudent = () => {
     if (newStudent.name && newStudent.email && newStudent.department) {
-      const student = {
+      const student: Student = {
         ...newStudent,
         id: newStudent.id || `${newStudent.department.split(' ')[0].toUpperCase()}${String(students.length + 1).padStart(3, '0')}`
       };
@@ -102,72 +123,68 @@ const StudentManagement = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Student Management</h2>
-          <p className="text-gray-600">Manage student records and information</p>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Management</h1>
+        <p className="text-gray-600">Manage student records and information</p>
+      </div>
+
+      {/* Header Actions */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Departments</option>
+            {departments.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedSection}
+            onChange={(e) => setSelectedSection(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Sections</option>
+            {sections.map(section => (
+              <option key={section} value={section}>Section {section}</option>
+            ))}
+          </select>
         </div>
-        <div className="flex space-x-3">
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2">
-            <Upload className="h-4 w-4" />
-            <span>Import CSV</span>
+        
+        <div className="flex gap-2">
+          <button className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 flex items-center">
+            <Upload className="h-4 w-4 mr-2" />
+            Import
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
           >
-            <Plus className="h-4 w-4" />
-            <span>Add Student</span>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Student
           </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Search students..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <select
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">All Departments</option>
-          {departments.map(dept => (
-            <option key={dept} value={dept}>{dept}</option>
-          ))}
-        </select>
-        
-        <select
-          value={selectedSection}
-          onChange={(e) => setSelectedSection(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">All Sections</option>
-          {sections.map(section => (
-            <option key={section} value={section}>Section {section}</option>
-          ))}
-        </select>
-
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Users className="h-4 w-4" />
-          <span>{filteredStudents.length} students</span>
         </div>
       </div>
 
       {/* Students Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
@@ -180,51 +197,31 @@ const StudentManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50 transition-colors duration-200">
+                <tr key={student.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-3">
-                      <img 
-                        src={student.photo} 
-                        alt={student.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{student.name}</p>
-                        <p className="text-sm text-gray-500">{student.email}</p>
+                    <div className="flex items-center">
+                      <img className="h-10 w-10 rounded-full" src={student.photo} alt={student.name} />
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                        <div className="text-sm text-gray-500">{student.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                      {student.id}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {student.department}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Section {student.section}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {student.year}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.phone}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.department}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Section {student.section}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.year}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors duration-200">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteStudent(student.id)}
-                        className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-colors duration-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button className="text-indigo-600 hover:text-indigo-900 mr-3">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteStudent(student.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -235,29 +232,30 @@ const StudentManagement = () => {
 
       {/* Add Student Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Student</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-screen overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Student</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                <input
+                  type="text"
+                  value={newStudent.id}
+                  onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Auto-generated if empty"
+                />
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input
                   type="text"
                   value={newStudent.name}
-                  onChange={(e) => setNewStudent({...newStudent, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID (Optional)</label>
-                <input
-                  type="text"
-                  value={newStudent.id}
-                  onChange={(e) => setNewStudent({...newStudent, id: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Auto-generated if empty"
+                  onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter student name"
                 />
               </div>
               
@@ -266,18 +264,20 @@ const StudentManagement = () => {
                 <input
                   type="email"
                   value={newStudent.email}
-                  onChange={(e) => setNewStudent({...newStudent, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter email address"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
-                  type="tel"
+                  type="text"
                   value={newStudent.phone}
-                  onChange={(e) => setNewStudent({...newStudent, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter phone number"
                 />
               </div>
               
@@ -285,8 +285,8 @@ const StudentManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                 <select
                   value={newStudent.department}
-                  onChange={(e) => setNewStudent({...newStudent, department: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Department</option>
                   {departments.map(dept => (
@@ -299,8 +299,8 @@ const StudentManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                 <select
                   value={newStudent.section}
-                  onChange={(e) => setNewStudent({...newStudent, section: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Section</option>
                   {sections.map(section => (
@@ -313,8 +313,8 @@ const StudentManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                 <select
                   value={newStudent.year}
-                  onChange={(e) => setNewStudent({...newStudent, year: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => setNewStudent({ ...newStudent, year: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Year</option>
                   {years.map(year => (
@@ -328,25 +328,25 @@ const StudentManagement = () => {
                 <input
                   type="url"
                   value={newStudent.photo}
-                  onChange={(e) => setNewStudent({...newStudent, photo: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/photo.jpg"
+                  onChange={(e) => setNewStudent({ ...newStudent, photo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter photo URL"
                 />
               </div>
             </div>
             
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handleAddStudent}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-              >
-                Add Student
-              </button>
+            <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleAddStudent}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Add Student
               </button>
             </div>
           </div>

@@ -1,19 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef } from 'react';
-import { Camera, Video, Users, AlertCircle, CheckCircle, Upload, Play, Square, RotateCcw } from 'lucide-react';
+import { Camera, Users, AlertCircle, CheckCircle, Play, Square, RotateCcw } from 'lucide-react';
+
+interface RecognizedStudent {
+  id: string;
+  name: string;
+  confidence: number;
+  timestamp: string;
+  photo: string;
+}
 
 const FacialRecognition = () => {
   const [isStreaming, setIsStreaming] = useState(false);
-  const [recognizedStudents, setRecognizedStudents] = useState([]);
+  const [recognizedStudents, setRecognizedStudents] = useState<RecognizedStudent[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState('Computer Science Engineering');
   const [selectedSection, setSelectedSection] = useState('A');
-  const videoRef = useRef(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [streamError, setStreamError] = useState('');
 
   const departments = ['Computer Science Engineering', 'Mechanical Engineering', 'Electronics & Communication', 'Civil Engineering'];
   const sections = ['A', 'B', 'C', 'D'];
 
   // Mock recognized students data
-  const mockRecognizedStudents = [
+  const mockRecognizedStudents: RecognizedStudent[] = [
     {
       id: 'CSE001',
       name: 'Alice Johnson',
@@ -33,32 +42,43 @@ const FacialRecognition = () => {
   const startCamera = async () => {
     try {
       setStreamError('');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
           facingMode: 'user'
-        } 
+        }
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await videoRef.current.play();
         setIsStreaming(true);
-        
+
         // Simulate facial recognition after 3 seconds
         setTimeout(() => {
           setRecognizedStudents(mockRecognizedStudents);
         }, 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing camera:', error);
-      setStreamError('Unable to access camera. Please ensure camera permissions are granted.');
+      let errorMessage = 'Unable to access camera. ';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage += 'Please grant camera permissions and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage += 'No camera device found.';
+      } else {
+        errorMessage += 'Please check your camera and try again.';
+      }
+      
+      setStreamError(errorMessage);
     }
   };
 
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
       tracks.forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
@@ -75,55 +95,52 @@ const FacialRecognition = () => {
       alert('No students recognized yet. Please wait for facial recognition to complete.');
       return;
     }
-    
     // Here you would save attendance to database
     alert(`Attendance marked for ${recognizedStudents.length} students successfully!`);
   };
 
   return (
     <div className="p-6">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Facial Recognition Attendance</h2>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Facial Recognition Attendance</h1>
         <p className="text-gray-600">Use AI-powered facial recognition to automatically mark attendance</p>
       </div>
 
-      {/* Important Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
-        <div className="flex items-start space-x-3">
-          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="text-sm font-medium text-amber-800">Integration Required</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              This interface is prepared for OpenCV integration. In production, you'll need to integrate with a facial recognition backend service 
-              that processes video frames and identifies students using trained models.
-            </p>
+      {/* Alert */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+        <div className="flex">
+          <AlertCircle className="h-5 w-5 text-blue-400" />
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">Development Mode</h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>This interface is prepared for OpenCV integration. In production, you'll need to integrate with a facial recognition backend service that processes video frames and identifies students using trained models.</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Class Selection */}
-      <div className="bg-gray-50 rounded-xl p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Class</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Controls */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
             <select
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {departments.map(dept => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Section</label>
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {sections.map(section => (
                 <option key={section} value={section}>Section {section}</option>
@@ -131,159 +148,119 @@ const FacialRecognition = () => {
             </select>
           </div>
         </div>
+
+        <div className="flex flex-wrap gap-3">
+          {!isStreaming ? (
+            <button
+              onClick={startCamera}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Start Camera
+            </button>
+          ) : (
+            <button
+              onClick={stopCamera}
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center"
+            >
+              <Square className="h-4 w-4 mr-2" />
+              Stop Camera
+            </button>
+          )}
+
+          <button
+            onClick={resetRecognition}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 flex items-center"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset Recognition
+          </button>
+
+          <button
+            onClick={markAttendance}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Mark Attendance
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Camera Feed */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Camera Feed</h3>
-            <div className="flex space-x-2">
-              {!isStreaming ? (
-                <button
-                  onClick={startCamera}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
-                >
-                  <Play className="h-4 w-4" />
-                  <span>Start Camera</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={resetRecognition}
-                    className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex items-center space-x-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    <span>Reset</span>
-                  </button>
-                  <button
-                    onClick={stopCamera}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center space-x-2"
-                  >
-                    <Square className="h-4 w-4" />
-                    <span>Stop Camera</span>
-                  </button>
-                </>
-              )}
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b">
+            <h2 className="text-xl font-semibold text-gray-900">Camera Feed</h2>
           </div>
-
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
-            {!isStreaming ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400">Click "Start Camera" to begin facial recognition</p>
-                </div>
-              </div>
-            ) : (
-              <>
+          <div className="p-6">
+            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+              {isStreaming ? (
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  className="w-full h-full object-cover"
+                  muted
+                  className="w-full h-full object-cover rounded-lg"
                 />
-                {isStreaming && (
-                  <div className="absolute top-4 left-4">
-                    <div className="flex items-center space-x-2 bg-red-600 text-white px-3 py-1 rounded-full text-sm">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      <span>LIVE</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Face detection overlay would be added here in production */}
-                {recognizedStudents.length > 0 && (
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="bg-green-600 text-white px-4 py-2 rounded-lg">
-                      <p className="text-sm font-medium">✓ {recognizedStudents.length} students recognized</p>
-                    </div>
-                  </div>
-                )}
-              </>
+              ) : (
+                <div className="text-center">
+                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">Click "Start Camera" to begin facial recognition</p>
+                </div>
+              )}
+            </div>
+            {isStreaming && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  ✓ {recognizedStudents.length} students recognized
+                </div>
+              </div>
+            )}
+            {streamError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700 text-sm">{streamError}</p>
+              </div>
             )}
           </div>
-
-          {streamError && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-700 text-sm">{streamError}</p>
-            </div>
-          )}
         </div>
 
         {/* Recognition Results */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recognized Students</h3>
-            {recognizedStudents.length > 0 && (
-              <button
-                onClick={markAttendance}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span>Mark Attendance</span>
-              </button>
-            )}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b">
+            <h2 className="text-xl font-semibold text-gray-900">Recognized Students</h2>
           </div>
-
-          {recognizedStudents.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No students recognized yet</p>
-              <p className="text-gray-400 text-sm mt-1">Start the camera to begin recognition</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {recognizedStudents.map((student, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <img 
-                    src={student.photo} 
-                    alt={student.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-green-300"
-                  />
-                  <div className="flex-1">
-                    <h4 className="text-lg font-medium text-gray-900">{student.name}</h4>
-                    <p className="text-sm text-gray-600 font-mono">{student.id}</p>
-                    <p className="text-xs text-gray-500">Recognized at {student.timestamp}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">
-                        {Math.round(student.confidence * 100)}%
-                      </span>
+          <div className="p-6">
+            {recognizedStudents.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No students recognized yet</p>
+                <p className="text-sm text-gray-400">Start the camera to begin recognition</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recognizedStudents.map((student) => (
+                  <div key={student.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <img
+                      src={student.photo}
+                      alt={student.name}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{student.name}</h3>
+                      <p className="text-sm text-gray-500">{student.id}</p>
+                      <p className="text-xs text-gray-400">Recognized at {student.timestamp}</p>
                     </div>
-                    <p className="text-xs text-gray-500">Confidence</p>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-green-600">
+                        {Math.round(student.confidence * 100)}%
+                      </p>
+                      <p className="text-xs text-gray-500">Confidence</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Technical Information */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">Integration Guidelines</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-blue-800">
-          <div>
-            <h4 className="font-medium mb-2">Required Components:</h4>
-            <ul className="space-y-1 text-blue-700">
-              <li>• OpenCV for face detection and recognition</li>
-              <li>• Pre-trained face recognition models</li>
-              <li>• Student face dataset for training</li>
-              <li>• Real-time video processing backend</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-medium mb-2">Implementation Notes:</h4>
-            <ul className="space-y-1 text-blue-700">
-              <li>• Train models with multiple photos per student</li>
-              <li>• Implement confidence thresholds ({'>'}80% recommended)</li>
-              <li>• Add manual verification for low confidence matches</li>
-              <li>• Consider lighting and angle variations</li>
-            </ul>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
